@@ -82,11 +82,26 @@ namespace FigmaImporter.Editor
 
             if (GUILayout.Button("Get Node Data"))
             {
-                ClearTextures();
-                LoadTextureCache();
-
+                if (_texturesCache.Count == 0)
+                {
+                    LoadTextureCache();
+                }
                 string apiUrl = ConvertToApiUrl(_settings.Url);
                 GetNodes(apiUrl);
+            }
+            if (_texturesCache.Count == 0)
+            {
+                if (GUILayout.Button("Load Texture Cache"))
+                {
+                    LoadTextureCache();
+                }
+            }
+            else
+            {
+                if (GUILayout.Button("Clear Texture Cache"))
+                {
+                    ClearTextures();
+                }
             }
 
             if (_nodes != null)
@@ -399,6 +414,9 @@ namespace FigmaImporter.Editor
 
         public async void LoadTextureCache()
         {
+            if (!Directory.Exists(GetCachePath()))
+                return;
+
             string[] filepath = Directory.GetFiles(GetCachePath(), "*.png");
 
             for (int i = 0; i < filepath.Length; i++)
@@ -410,8 +428,8 @@ namespace FigmaImporter.Editor
                     {
                         while (www.progress < 1f)
                         {
-                            if (true)
-                                FigmaNodesProgressInfo.ShowProgress(www.progress);
+                            FigmaNodesProgressInfo.CurrentInfo = "Loading texture cache";
+                            FigmaNodesProgressInfo.ShowProgress(www.progress);
                             await Task.Delay(100);
                         }
                         var data = www.bytes;
@@ -423,8 +441,9 @@ namespace FigmaImporter.Editor
                         RegisterTexture(texture, id);
                     }
                 }
-
             }
+
+            FigmaNodesProgressInfo.HideProgress();
         }
         public string CheckDuplicateNode(string nodeId)
         {
